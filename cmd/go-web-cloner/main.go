@@ -1,13 +1,12 @@
 package main
 
 import (
-	"net/http"
-	"log"
-	"os"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	asyncq "go-web-cloner/asynq"
 	"go-web-cloner/handler"
+	"log"
+	"os"
 )
 
 func init(){
@@ -25,20 +24,15 @@ func main(){
 	dispatcher:=asyncq.NewDispatcher(1)
 	dispatcher.Run()
 
-	router := mux.NewRouter()
+	router := gin.Default()
 
-	router.HandleFunc("/",handler.Index())
-	router.HandleFunc("/api",handler.Index())
-	router.HandleFunc("/api/scrape", handler.Scrape())
-	router.HandleFunc("/api/status",handler.Status())
-	router.HandleFunc("/api/stop", handler.Stop())
-	router.HandleFunc("/report",handler.Report())
+	router.GET("/",handler.Index)
+	router.GET("/api",handler.Index)
+	router.GET("/api/scrape", handler.Scrape)
+	router.GET("/api/status",handler.Status)
+	router.GET("/api/stop", handler.Stop)
+	router.GET("/report",handler.Report)
+	//router.Handle("/static",http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 
-	srv := &http.Server{
-		Handler:      router,
-		Addr:         "0.0.0.0:" + PORT,
-	}
-
-	log.Println("[[main]] Server listening on: localhost:", PORT)
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(router.Run("0.0.0.0:"+PORT))
 }

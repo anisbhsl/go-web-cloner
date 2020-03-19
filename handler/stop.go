@@ -1,21 +1,17 @@
 package handler
 
 import (
-	"encoding/json"
-	"log"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func Stop() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("[[handler/stop]] New HTTP Request")
+func Stop(c *gin.Context){
+	response:=make(map[string]interface{})
+	response["msg"]="Scrapping Stopped"
 
-		response:=make(map[string]interface{})
-		response["msg"]="Scrapping Stopped"
+	c.JSON(
+		http.StatusOK,
+		response,
+	)
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(response)
-		return
-	}
 }

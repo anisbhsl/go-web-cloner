@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report</title>
+    <style>
+            table {
+              font-family: arial, sans-serif;
+              border-collapse: collapse;
+              width: 100%;
+            }
+
+            td, th {
+              border: 1px solid #dddddd;
+              text-align: left;
+              padding: 8px;
+            }
+
+            tr:nth-child(even) {
+              background-color: #dddddd;
+            }
+    </style>
+
+</head>
+<body>
+    <h1>Analysis of www.airbnb.com</h1>
+
+    <h3>Request Parameters</h3>
+    <table>
+      <tr>
+        <th>Params</th>
+        <th>FieldValue</th>
+      </tr>
+      <tr>
+        <td>URL</td>
+        <td>www.airbnb.com/hosting</td>
+      </tr>
+      <tr>
+        <td>screen_width</td>
+        <td>1920</td>
+      </tr>
+      <tr>
+        <td>screen_height</td>
+        <td>1080</td>
+      </tr>
+      <tr>
+        <td>project_id</td>
+        <td>abc</td>
+      </tr>
+      <tr>
+        <td>folder_threshold</td>
+        <td>20</td>
+      </tr>
+      <tr>
+        <td>folder_examples_count</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>patterns</td>
+        <td>["www.airbnb.com/s/*/experiences"] </td>
+      </tr>
+    </table>
+
+    <h3>Detailed Report</h3>
+    <table>
+        <tr>
+            <th>Original URL</th>
+            <th>Scrape URL</th>
+            <th>Folder Count</th>
+            <th>Timestamp</th>
+            <th>Loading Time(s)</th>
+        </tr>
+      <tr>
+        <td><a href="https://www.airbnb.com">https://www.airbnb.com</a></td>
+        <td><a href="www.airbnb.com">www.airbnb.com</a></td>
+        <td>1</td>
+        <td>2020-03-08 11:22:00</td>
+        <td>0.122</td>
+      </tr>
+      <tr>
+        <td><a href="www.airbnb.com/hosting">www.airbnb.com/hosting</a></td>
+        <td><a href="www.airbnb.com/hosting">www.airbnb.com/hosting</a></td>
+        <td>1</td>
+        <td>2020-03-08 11:22:00</td>
+        <td>0.122</td>
+      </tr>
+    </table>
+
+</body>
+</html>
