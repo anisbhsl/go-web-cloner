@@ -25,9 +25,11 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		       "patterns": ["www.airbnb.com/s/asterisk(*)/experiences]"
 
 		*/
+		response := make(map[string]interface{})
+
 		var scrapeConfig asyncq.ScrapeConfig
 		if err := c.Bind(&scrapeConfig); err != nil {
-			response := make(map[string]interface{})
+
 			response["err"] = "Error while form parsing"
 			response["err_desc"] = err
 			c.JSON(
@@ -37,8 +39,19 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 			return
 		}
 
+		//Params Validation Here:
+		if scrapeConfig.URL==""{
+			response["err"]="url is missing"
+			c.JSON(
+				http.StatusBadRequest,
+				response,
+				)
+			return
+		}
+
+
+
 		if ok:=dispatcher.IsWorkerAvailable();!ok{
-			response := make(map[string]interface{})
 			response["msg"]="Scrapper Running Another Job"
 			response["scrape_id"]=dispatcher.Queue
 			c.JSON(
@@ -51,7 +64,6 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		//send response
 		curTime:= time.Now().Unix()
 		scrapeID := strconv.Itoa(int(curTime))
-		response := make(map[string]interface{})
 		response["scrape_id"] = scrapeID //use unix timestamp
 		response["msg"] = "Scrapping Started"
 		response["url"] = scrapeConfig.URL
