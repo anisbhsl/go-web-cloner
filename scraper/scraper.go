@@ -26,9 +26,16 @@ type Config struct {
 	MaxDepth     uint // download depth, 0 for unlimited
 	Timeout      uint // time limit in seconds to process each http request
 
-	OutputDirectory string
-	Username        string
-	Password        string
+	OutputDirectory     string
+	Username            string
+	Password            string
+	ProjectID           string
+	ScrapeID            string
+	ScreenWidth         int      `json:"screen_width"`
+	ScreenHeight        int      `json:"screen_height"`
+	FolderThreshold     int      `json:"folder_threshold"`
+	FolderExamplesCount int      `json:"folder_examples_count"`
+	Patterns            []string `json:"patterns"`
 }
 
 // Scraper contains all scraping data.
@@ -77,7 +84,7 @@ func New(logger *zap.Logger, cfg Config) (*Scraper, error) {
 
 	b := surf.NewBrowser()
 	b.SetUserAgent(agent.GoogleBot())
-	b.SetTimeout(time.Duration(cfg.Timeout) * time.Second)
+	//b.SetTimeout(time.Duration(cfg.Timeout) * time.Second)
 
 	s := &Scraper{
 		config: cfg,
@@ -89,9 +96,16 @@ func New(logger *zap.Logger, cfg Config) (*Scraper, error) {
 		cssURLRe:  regexp.MustCompile(`^url\(['"]?(.*?)['"]?\)$`),
 		includes:  includes,
 		excludes:  excludes,
-		report:    &Report{
-			JobID:         "123random", //TODO: assign a jobID here la
-			DetailedReport: make([]DetailedReport,0),
+		report: &Report{
+			ProjectID:           cfg.ProjectID,
+			ScrapeID:            cfg.ScrapeID,
+			URL:                 cfg.URL,
+			ScreenWidth:         cfg.ScreenWidth,
+			ScreenHeight:        cfg.ScreenHeight,
+			FolderThreshold:     cfg.FolderThreshold,
+			FolderExamplesCount: cfg.FolderExamplesCount,
+			Patterns:            cfg.Patterns,
+			DetailedReport:      make([]DetailedReport, 0),
 		},
 	}
 
@@ -133,10 +147,10 @@ func (s *Scraper) Start() error {
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
 	}
 
-	s.downloadPage(s.URL, 0)
+	s.downloadPage(s.URL, 0, time.Now())
 
-	err:=s.generateReport()
-	if err!=nil{
+	err := s.generateReport()
+	if err != nil {
 		s.log.Error("report couldn't be generated",
 			zap.Error(err))
 	}
@@ -144,21 +158,22 @@ func (s *Scraper) Start() error {
 	return nil
 }
 
-func (s *Scraper) downloadPage(u *url.URL, currentDepth uint) {
+func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Time) {
 	s.log.Info("Downloading", zap.Stringer("URL", u))
 	if err := s.browser.Open(u.String()); err != nil {
 		s.log.Error("Request failed",
 			zap.Stringer("URL", u),
 			zap.Error(err))
 
-		details:=DetailedReport{
-			TimeStamp:   time.Now().Unix(),
-			OriginURL:   u.Host+u.Path,
-			LocalURL:    "",
-			StatusCode:  400,
-			ReponseTime: time.Now().Unix(),
+		currentTime := time.Now()
+		details := DetailedReport{
+			TimeStamp:    startTime,
+			OriginURL:    u.Host + u.Path,
+			LocalURL:     "",
+			StatusCode:   400,
+			ResponseTime: currentTime.Sub(startTime).Seconds(),
 		}
-		s.report.DetailedReport=append(s.report.DetailedReport,details)
+		s.report.DetailedReport = append(s.report.DetailedReport, details)
 		return
 	}
 	if c := s.browser.StatusCode(); c != http.StatusOK {
@@ -166,14 +181,15 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint) {
 			zap.Stringer("URL", u),
 			zap.Int("http_status_code", c))
 
-		details:=DetailedReport{
-			TimeStamp:   time.Now().Unix(),
-			OriginURL:   u.Host+u.Path,
-			LocalURL:    "",
-			StatusCode:  400,
-			ReponseTime: time.Now().Unix(),
+		currentTime := time.Now()
+		details := DetailedReport{
+			TimeStamp:    startTime,
+			OriginURL:    u.Host + u.Path,
+			LocalURL:     "",
+			StatusCode:   400,
+			ResponseTime: currentTime.Sub(startTime).Seconds(),
 		}
-		s.report.DetailedReport=append(s.report.DetailedReport,details)
+		s.report.DetailedReport = append(s.report.DetailedReport, details)
 
 		return
 	}
@@ -185,14 +201,15 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint) {
 			zap.Stringer("URL", u),
 			zap.Error(err))
 
-		details:=DetailedReport{
-			TimeStamp:   time.Now().Unix(),
-			OriginURL:   u.Host+u.Path,
-			LocalURL:    "",
-			StatusCode:  400,
-			ReponseTime: time.Now().Unix(),
+		currentTime := time.Now()
+		details := DetailedReport{
+			TimeStamp:    startTime,
+			OriginURL:    u.Host + u.Path,
+			LocalURL:     "",
+			StatusCode:   400,
+			ResponseTime: currentTime.Sub(startTime).Seconds(),
 		}
-		s.report.DetailedReport=append(s.report.DetailedReport,details)
+		s.report.DetailedReport = append(s.report.DetailedReport, details)
 
 		return
 	}
@@ -203,9 +220,8 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint) {
 		// scrape, in case of a redirect it changed
 		s.URL = u
 	}
-	//TODO: save this URL somewhere
 
-	s.storePage(u, buf)
+	s.storePage(u, buf, startTime)
 
 	s.downloadReferences()
 
@@ -220,15 +236,13 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint) {
 		}
 	}
 
-	fmt.Println("[[171: scraper.go]]",toScrape)
-
 	//TODO: recursive downloading :)
 	for _, URL := range toScrape {
-		s.downloadPage(URL, currentDepth+1)
+		s.downloadPage(URL, currentDepth+1, time.Now())
 	}
 }
 
-func (s *Scraper)  storePage(u *url.URL, buf *bytes.Buffer) {
+func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) {
 	var details DetailedReport
 	html, err := s.fixFileReferences(u, buf)
 	if err != nil {
@@ -236,13 +250,14 @@ func (s *Scraper)  storePage(u *url.URL, buf *bytes.Buffer) {
 			zap.Stringer("URL", u),
 			zap.Error(err))
 
-			details=DetailedReport{
-				TimeStamp:   time.Now().Unix(),
-				OriginURL:   u.Host+u.Path,
-				LocalURL:    "",
-				StatusCode:  400,
-				ReponseTime: time.Now().Unix(),
-			}
+		currentTime := time.Now()
+		details = DetailedReport{
+			TimeStamp:    startTime,
+			OriginURL:    u.Host + u.Path,
+			LocalURL:     "",
+			StatusCode:   400,
+			ResponseTime: currentTime.Sub(startTime).Seconds(),
+		}
 
 	} else {
 		buf = bytes.NewBufferString(html)
@@ -253,29 +268,26 @@ func (s *Scraper)  storePage(u *url.URL, buf *bytes.Buffer) {
 				zap.Stringer("URL", u),
 				zap.String("file", filePath),
 				zap.Error(err))
-				details=DetailedReport{
-					TimeStamp:   time.Now().Unix(),
-					OriginURL:   u.Host+u.Path,
-					LocalURL:    filePath,
-					StatusCode:  400,
-					ReponseTime: time.Now().Unix(),
-				}
-		}else{
-
-			details=DetailedReport{
-				TimeStamp:   time.Now().Unix(),
-				OriginURL:   u.Host+u.Path,
-				LocalURL:    filePath,
-				StatusCode:  200,
-				ReponseTime: time.Now().Unix(),
+			currentTime := time.Now()
+			details = DetailedReport{
+				TimeStamp:    startTime,
+				OriginURL:    u.Host + u.Path,
+				LocalURL:     filePath,
+				StatusCode:   400,
+				ResponseTime: currentTime.Sub(startTime).Seconds(),
+			}
+		} else {
+			currentTime := time.Now()
+			details = DetailedReport{
+				TimeStamp:    startTime,
+				OriginURL:    u.Host + u.Path,
+				LocalURL:     filePath,
+				StatusCode:   200,
+				ResponseTime: currentTime.Sub(startTime).Seconds(),
 			}
 
 		}
-
-
-
-		fmt.Println("[[storePage function 203:scraper.go]] file ma lekhiyo hai guys")
 	}
-	s.report.DetailedReport=append(s.report.DetailedReport,details)
+	s.report.DetailedReport = append(s.report.DetailedReport, details)
 
 }

@@ -6,8 +6,9 @@ import (
 )
 
 func Status(c *gin.Context) {
+	//Know if scrapper if idle or any process is running!
 	response:=make(map[string]interface{})
-	response["job_id"]="12345678"
+	response["scrape_id"]="12345"
 	response["msg"]="Scrapper Running"
 
 	c.JSON(

@@ -1,0 +1,80 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Report</title>
+    <style>
+            table {
+              font-family: arial, sans-serif;
+              border-collapse: collapse;
+              width: 100%;
+            }
+
+            td, th {
+              border: 1px solid #dddddd;
+              text-align: left;
+              padding: 8px;
+            }
+
+            tr:nth-child(even) {
+              background-color: #dddddd;
+            }
+    </style>
+
+</head>
+<body>
+<h1>Analysis of  Project ID : <i>{{ .project_id }} Scrape ID: <i>{{.scrape_id}}</i></h1>
+<div>
+		<h3>Request Parameters</h3>
+		<table>
+		  <tr>
+		      <th>Params</th>
+		      <th>Values</th>
+		  </tr>
+		  <tr>
+		      <td>Screen Width</td>
+		      <td>{{ .screen_width }}</td>
+		    </tr>
+		    <tr>
+		      <td>Screen Height </td>
+		      <td> {{ .screen_height }} </td>
+		     </tr>
+		     <tr>
+		      <td>Folder Threshold </td>
+		      <td>{{ .folder_threshold}} </td>
+		     </tr>
+		     <tr>
+		      <td>Folder Examples Count </td>
+		      <td>{{ .folder_examples_count }} </td>
+		     </tr>
+		     <tr>
+		      <td>Patterns</td>
+		      <td>{{.patterns}} </td>
+		     </tr>
+		</table>
+
+		<h3>Detailed Report</h3>
+		<table>
+              <tr>
+                <th>Original URL</th>
+                <th>Local URL</th>
+                <th>Folder Count</th>
+                <th>Status Code </th>
+                <th>Timestamp</th>
+                <th>Loading Time(s)</th>
+
+              </tr>
+              {{ range .details }}
+                 <tr>
+                    <td>  <a href="/api/redirect?url={{ .OriginURL }}"> {{ .OriginURL }}  </a>  </td>
+                    <td><a href="{{.LocalURL}}">{{ .LocalURL }}</a></td>
+                    <td></td>
+                   <td>{{ .StatusCode }}</td>
+                   <td>{{ .TimeStamp }}</td>
+                   <td>{{ .ResponseTime }}</td>
+                 </tr>
+              {{ end }}
+		</table>
+
+</div>
+</body>
+</html>
