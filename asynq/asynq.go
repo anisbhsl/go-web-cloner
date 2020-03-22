@@ -1,50 +1,29 @@
 package asyncq
 
-import "log"
+import (
+	"go-web-cloner/scraper"
+)
 
-//JobQueue is a buffered Job channel where job requests will be sent
-var JobQueue = make(chan Job)
-
-//Worker executes the Job
-type Worker struct{
-	Workerpool chan chan Job
-	JobChannel chan Job
-	StopWorker chan bool
+type Dispatcher struct{
+	Queue []string
+	Scraper *scraper.Scraper
 }
 
-func NewWorker(workerPool chan chan Job) *Worker{
-	log.Println("[[asyncq/worker]] Created a new worker")
-	return &Worker{
-		Workerpool: workerPool,
-		JobChannel: make(chan Job),
-		StopWorker: make(chan bool),
-	}
-}
-
-//Start fires up the worker and keeps listening for any incoming job requests
-func (w Worker) Start(){
-	log.Println("[[asyncq/worker]] Started listening for incoming jobs")
-	go func(){
-		for{
-			//Register a worker into job channel
-			w.Workerpool<-w.JobChannel
-
-			select{
-			case job:= <-w.JobChannel:
-				//whenever a new job arrives in job channel start execution
-				log.Println("[[38:async]] new job received!")
-				job.Perform() //perform a job
-			case <-w.StopWorker:
-				return //stop the worker when signal is received!
-			}
+func NewDispatcher()*Dispatcher{
+	return &Dispatcher{
+			Queue:[]string{},
 		}
-	}()
 }
 
+func (d *Dispatcher) IsWorkerAvailable() bool{
+	if len(d.Queue)>=1{
+		return false
+	}
+	//available
+	return true
+}
 
-//Stop signals to stop the running worker
-func (w Worker) Stop(){
-	go func(){
-		w.StopWorker<-true
-	}()
+func (d *Dispatcher) StopScrapper(){
+	d.Scraper.Config.Stop=true
+	d.Queue=[]string{}
 }

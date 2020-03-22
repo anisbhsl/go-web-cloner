@@ -3,7 +3,6 @@ package scraper
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/headzoo/surf"
 	"github.com/headzoo/surf/agent"
@@ -22,7 +21,7 @@ type Config struct {
 	Includes []string
 	Excludes []string
 
-	ImageQuality uint // image quality from 0 to 100%, 0 to disable reencoding
+	ImageQuality uint
 	MaxDepth     uint // download depth, 0 for unlimited
 	Timeout      uint // time limit in seconds to process each http request
 
@@ -36,11 +35,12 @@ type Config struct {
 	FolderThreshold     int      `json:"folder_threshold"`
 	FolderExamplesCount int      `json:"folder_examples_count"`
 	Patterns            []string `json:"patterns"`
+	Stop bool
 }
 
 // Scraper contains all scraping data.
 type Scraper struct {
-	config  Config
+	Config  Config
 	log     *zap.Logger
 	URL     *url.URL
 	browser *browser.Browser
@@ -87,7 +87,7 @@ func New(logger *zap.Logger, cfg Config) (*Scraper, error) {
 	//b.SetTimeout(time.Duration(cfg.Timeout) * time.Second)
 
 	s := &Scraper{
-		config: cfg,
+		Config: cfg,
 
 		browser:   b,
 		log:       logger,
@@ -130,8 +130,8 @@ func compileRegexps(sl []string) ([]*regexp.Regexp, error) {
 
 // Start starts the scraping
 func (s *Scraper) Start() error {
-	if s.config.OutputDirectory != "" {
-		if err := os.MkdirAll(s.config.OutputDirectory, os.ModePerm); err != nil {
+	if s.Config.OutputDirectory != "" {
+		if err := os.MkdirAll(s.Config.OutputDirectory, os.ModePerm); err != nil {
 			return err
 		}
 	}
@@ -142,8 +142,8 @@ func (s *Scraper) Start() error {
 	}
 	s.processed[p] = struct{}{}
 
-	if s.config.Username != "" {
-		auth := base64.StdEncoding.EncodeToString([]byte(s.config.Username + ":" + s.config.Password))
+	if s.Config.Username != "" {
+		auth := base64.StdEncoding.EncodeToString([]byte(s.Config.Username + ":" + s.Config.Password))
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
 	}
 
@@ -159,6 +159,11 @@ func (s *Scraper) Start() error {
 }
 
 func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Time) {
+	if s.Config.Stop{
+		s.log.Info("Stopping scrapper...")
+		return
+	}
+
 	s.log.Info("Downloading", zap.Stringer("URL", u))
 	if err := s.browser.Open(u.String()); err != nil {
 		s.log.Error("Request failed",
@@ -196,7 +201,7 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 
 	buf := &bytes.Buffer{}
 	if _, err := s.browser.Download(buf); err != nil {
-		fmt.Println("[[151:scraper.go]] writing content to buffer hai guys!")
+
 		s.log.Error("Downloading content failed",
 			zap.Stringer("URL", u),
 			zap.Error(err))
@@ -240,6 +245,8 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 	for _, URL := range toScrape {
 		s.downloadPage(URL, currentDepth+1, time.Now())
 	}
+
+
 }
 
 func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) {

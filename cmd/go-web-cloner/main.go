@@ -20,20 +20,20 @@ func main(){
 	if PORT == "" {
 		PORT = "3000"
 	}
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)  //use this in release
 
 
-	dispatcher:=asyncq.NewDispatcher(1)
-	dispatcher.Run()
+	dispatcher:=asyncq.NewDispatcher()
+
 	//html:=template.Must(template.ParseFiles("public/templates/index.html"))
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
 	router.Static("/data","./data")
-	router.GET("/",handler.Index)
-	router.GET("/api",handler.Index)
-	router.POST("/api/scrape", handler.Scrape)
-	router.GET("/api/status",handler.Status)
-	router.GET("/api/stop", handler.Stop)
+	router.GET("/",handler.Index(dispatcher))
+	router.GET("/api",handler.Index(dispatcher))
+	router.POST("/api/scrape", handler.Scrape(dispatcher))
+	router.GET("/api/status",handler.Status(dispatcher))
+	router.GET("/api/stop", handler.Stop(dispatcher))
 	router.GET("/api/redirect",handler.Redirect)
 	router.GET("/report",handler.Report)
 	//router.Handle("/static",http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))

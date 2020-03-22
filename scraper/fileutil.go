@@ -50,7 +50,7 @@ func (s *Scraper) GetFilePath(url *url.URL, isAPage bool) string {
 		externalHost = "_" + url.Host // _ is a prefix for external domains on the filesystem
 	}
 
-	return filepath.Join(s.config.OutputDirectory, s.URL.Host, externalHost, fileName)
+	return filepath.Join(s.Config.OutputDirectory, s.URL.Host, externalHost, fileName)
 }
 
 func (s *Scraper) writeFile(filePath string, buf *bytes.Buffer) error {

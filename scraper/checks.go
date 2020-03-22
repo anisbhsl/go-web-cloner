@@ -30,7 +30,7 @@ func (s *Scraper) checkPageURL(url *url.URL, currentDepth uint) bool {
 	}
 
 	s.processed[p] = struct{}{}
-	if s.config.MaxDepth != 0 && currentDepth == s.config.MaxDepth {
+	if s.Config.MaxDepth != 0 && currentDepth == s.Config.MaxDepth {
 		s.log.Debug("Skipping too deep level page", zap.Stringer("URL", url))
 		return false
 	}

@@ -1,18 +1,30 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	asyncq "go-web-cloner/asynq"
 	"net/http"
 )
 
-func Status(c *gin.Context) {
-	//Know if scrapper if idle or any process is running!
-	response:=make(map[string]interface{})
-	response["scrape_id"]="12345"
-	response["msg"]="Scrapper Running"
+func Status(dispatcher *asyncq.Dispatcher) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		response := make(map[string]interface{})
 
-	c.JSON(
-		http.StatusOK,
-		response,
-	)
+		//Know if scrapper if idle or any process is running!
+		if ok:=dispatcher.IsWorkerAvailable();!ok{
+			response["status"]=fmt.Sprintf("Another scrapper with id %v already running",dispatcher.Queue)
+			c.JSON(
+				http.StatusTooManyRequests,
+				response,
+				)
+			return
+		}
+
+		response["status"] = "IDLE"
+		c.JSON(
+			http.StatusOK,
+			response,
+		)
+	}
 }

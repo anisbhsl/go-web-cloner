@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Scraper) checkImageForRecode(url *url.URL, buf *bytes.Buffer) *bytes.Buffer {
-	if s.config.ImageQuality == 0 {
+	if s.Config.ImageQuality == 0 {
 		return buf
 	}
 
@@ -48,7 +48,7 @@ func (s *Scraper) checkImageForRecode(url *url.URL, buf *bytes.Buffer) *bytes.Bu
 // encodeJPEG encodes a new JPG based on the given quality setting
 func (s *Scraper) encodeJPEG(img image.Image) *bytes.Buffer {
 	o := &jpeg.Options{
-		Quality: int(s.config.ImageQuality),
+		Quality: int(s.Config.ImageQuality),
 	}
 
 	outBuf := &bytes.Buffer{}
