@@ -37,5 +37,6 @@ func (s *Scraper) generateReport() error {
 	if err != nil {
 		return err
 	}
+	s.log.Info("Report Generated...")
 	return nil
 }

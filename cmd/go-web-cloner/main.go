@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	asyncq "go-web-cloner/asynq"
+	"github.com/gin-gonic/contrib/static"
 	"go-web-cloner/handler"
 	"log"
 	"os"
@@ -26,9 +27,12 @@ func main(){
 	dispatcher:=asyncq.NewDispatcher()
 
 	//html:=template.Must(template.ParseFiles("public/templates/index.html"))
+
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
-	router.Static("/data","./data")
+	//router.Static("/data","./data")
+
+	router.Use(static.Serve("/data",static.LocalFile("./data",true)))
 	router.GET("/",handler.Index(dispatcher))
 	router.GET("/api",handler.Index(dispatcher))
 	router.POST("/api/scrape", handler.Scrape(dispatcher))

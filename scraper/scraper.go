@@ -3,6 +3,7 @@ package scraper
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/headzoo/surf"
 	"github.com/headzoo/surf/agent"
@@ -35,6 +36,7 @@ type Config struct {
 	FolderThreshold     int      `json:"folder_threshold"`
 	FolderExamplesCount int      `json:"folder_examples_count"`
 	Patterns            []string `json:"patterns"`
+	PatternCount map[*regexp.Regexp]int //folder count patterns
 	Stop bool
 }
 
@@ -130,6 +132,7 @@ func compileRegexps(sl []string) ([]*regexp.Regexp, error) {
 
 // Start starts the scraping
 func (s *Scraper) Start() error {
+	//create output DIR
 	if s.Config.OutputDirectory != "" {
 		if err := os.MkdirAll(s.Config.OutputDirectory, os.ModePerm); err != nil {
 			return err
@@ -147,6 +150,7 @@ func (s *Scraper) Start() error {
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
 	}
 
+
 	s.downloadPage(s.URL, 0, time.Now())
 
 	err := s.generateReport()
@@ -160,7 +164,12 @@ func (s *Scraper) Start() error {
 
 func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Time) {
 	if s.Config.Stop{
-		s.log.Info("Stopping scrapper...")
+		s.log.Info("Stop Command Received ==> Stopping scrapper...")
+		return
+	}
+
+	//if folder threshold count has been exceeded return
+	if s.hasFolderThresholdExceeded(u){
 		return
 	}
 
@@ -191,7 +200,7 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 			TimeStamp:    startTime,
 			OriginURL:    u.Host + u.Path,
 			LocalURL:     "",
-			StatusCode:   400,
+			StatusCode:   c,
 			ResponseTime: currentTime.Sub(startTime).Seconds(),
 		}
 		s.report.DetailedReport = append(s.report.DetailedReport, details)
@@ -201,7 +210,6 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 
 	buf := &bytes.Buffer{}
 	if _, err := s.browser.Download(buf); err != nil {
-
 		s.log.Error("Downloading content failed",
 			zap.Stringer("URL", u),
 			zap.Error(err))
@@ -246,7 +254,6 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		s.downloadPage(URL, currentDepth+1, time.Now())
 	}
 
-
 }
 
 func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) {
@@ -268,7 +275,21 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 
 	} else {
 		buf = bytes.NewBufferString(html)
+
 		filePath := s.GetFilePath(u, true)
+		f := fmt.Sprintf("filepath is : %v", filePath)
+		upath := fmt.Sprintf("u.Path is : %v", u.Path)
+		s.log.Info(f)
+		s.log.Info(upath)
+
+		regexForResources := regexp.MustCompile("(\\.png|\\.jpg|\\.jpeg|\\.pdf|\\.gif|\\.docx|\\.mp4|\\.avi)")
+		resourceExtension := regexForResources.FindString(u.Path)
+
+		if resourceExtension != "" {
+			//modifiedFilePath = strings.Replace(filePath, ".html", resourceExtension, 1)
+			return
+		}
+
 		// always update html files, content might have changed
 		if err = s.writeFile(filePath, buf); err != nil {
 			s.log.Error("Writing HTML to file failed",
@@ -279,7 +300,7 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 			details = DetailedReport{
 				TimeStamp:    startTime,
 				OriginURL:    u.Host + u.Path,
-				LocalURL:     filePath,
+				LocalURL:     "", //TODO: add resource mapping logic here
 				StatusCode:   400,
 				ResponseTime: currentTime.Sub(startTime).Seconds(),
 			}
@@ -294,7 +315,43 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 			}
 
 		}
+		s.report.DetailedReport = append(s.report.DetailedReport, details)
+
 	}
-	s.report.DetailedReport = append(s.report.DetailedReport, details)
+}
+
+
+func (s *Scraper) hasFolderThresholdExceeded(u *url.URL) bool{
+
+	/*
+	TODO:
+	1. Check if the URL is in patterns
+	2. If yes, increase its coutner and check if counter has exceeded.
+		2.i. If YES, add the URL pattern to exclude list
+		s.Excludes=append(s.Excludes,url)
+	*/
+
+	//if there are no patterns supplied, do job as usual
+	if len(s.Config.Patterns)==0{
+		return false
+	}
+
+	for reg,_:=range s.Config.PatternCount{
+		s.log.Info("[[hasFolderThresholdExceeded]] u.path+u.host:",zap.String("url: %v",u.Host+u.Path))
+		if reg.Match([]byte(u.Host+u.Path)){
+		    s.log.Info("matched with",zap.String("url : ",u.Host+u.Path))
+		    s.Config.PatternCount[reg]++ //increase count for matched
+		}
+	}
+
+
+	for reg,_:=range s.Config.PatternCount{
+		if reg.Match([]byte(u.Host+u.Path)){
+		    if s.Config.PatternCount[reg] > s.Config.FolderThreshold{
+			    return true
+		    }
+		}
+	}
+	return false
 
 }

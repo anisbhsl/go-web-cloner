@@ -3,6 +3,8 @@ package asyncq
 import (
 	"go-web-cloner/scraper"
 	"go.uber.org/zap"
+	"regexp"
+	"strings"
 )
 
 type ScrapeConfig struct {
@@ -15,6 +17,7 @@ type ScrapeConfig struct {
 	FolderThreshold     int      `json:"folder_threshold"`
 	FolderExamplesCount int      `json:"folder_examples_count"`
 	Patterns            []string `json:"patterns"`
+	MaxDepth            uint     `json:"max_depth"`
 }
 
 func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
@@ -23,7 +26,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		Includes:            nil,
 		Excludes:            nil,
 		ImageQuality:        0,
-		MaxDepth:            0,
+		MaxDepth:            s.MaxDepth,
 		Timeout:             0,
 		OutputDirectory:     "data/" + s.ProjectID + "/" + scrapeID, //set output directory
 		Username:            s.Username,
@@ -35,6 +38,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		FolderThreshold:     s.FolderThreshold,
 		FolderExamplesCount: s.FolderExamplesCount,
 		Patterns:            s.Patterns,
+		PatternCount:        initPatternCount(s.Patterns),
 		Stop:                false,
 	}
 	logger := logger()
@@ -66,4 +70,30 @@ func logger() *zap.Logger {
 	level.SetLevel(zap.InfoLevel)
 	logger, _ := config.Build()
 	return logger
+}
+
+func initPatternCount(patterns []string)(map[*regexp.Regexp]int){
+	patternCount:=make(map[*regexp.Regexp]int)
+
+	if len(patterns)==0{
+		//add main URL
+		//pattern:=strings.Replace(url.Path,"*",".*",-1)
+		//re:=regexp.MustCompile(pattern)
+		//patternCount[re]=0
+		return patternCount
+	}else{
+		for _,pa:=range patterns{
+			pattern:=strings.Replace(pa,"*",".*",-1)
+			//remove http and https prefix
+			if strings.Contains(pattern,"https://"){
+				pattern=strings.TrimPrefix(pattern,"https://")
+			}else if strings.Contains(pattern,"http://"){
+				pattern=strings.TrimPrefix(pattern,"http://")
+			}
+
+			re:=regexp.MustCompile(pattern)
+			patternCount[re]=0
+		}
+	}
+	return patternCount
 }

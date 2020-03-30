@@ -50,7 +50,6 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		}
 
 
-
 		if ok:=dispatcher.IsWorkerAvailable();!ok{
 			response["msg"]="Scrapper Running Another Job"
 			response["scrape_id"]=dispatcher.Queue
@@ -77,8 +76,8 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		response["folder_threshold"] = scrapeConfig.FolderExamplesCount
 		response["folder_examples_count"] = scrapeConfig.FolderExamplesCount
 		response["patterns"] = scrapeConfig.Patterns
+		response["max_depth"]=scrapeConfig.MaxDepth
 
-		//go startScrapper(scrapeConfig, scrapeID)
 		dispatcher.Queue=append(dispatcher.Queue,scrapeID) //enqueue a job
 		go dispatcher.StartScrapper(scrapeConfig,scrapeID)  //run async
 
