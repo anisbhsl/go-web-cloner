@@ -341,17 +341,13 @@ func (s *Scraper) hasFolderThresholdExceeded(u *url.URL) bool{
 		if reg.Match([]byte(u.Host+u.Path)){
 		    s.log.Info("matched with",zap.String("url : ",u.Host+u.Path))
 		    s.Config.PatternCount[reg]++ //increase count for matched
+			if s.Config.FolderThreshold < s.Config.PatternCount[reg]  {
+				return true
+			}
+			return false
 		}
 	}
 
-
-	for reg,_:=range s.Config.PatternCount{
-		if reg.Match([]byte(u.Host+u.Path)){
-		    if s.Config.PatternCount[reg] > s.Config.FolderThreshold{
-			    return true
-		    }
-		}
-	}
 	return false
-
 }
+
