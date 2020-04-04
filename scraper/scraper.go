@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -37,6 +38,7 @@ type Config struct {
 	FolderExamplesCount int      `json:"folder_examples_count"`
 	Patterns            []string `json:"patterns"`
 	PatternCount map[*regexp.Regexp]int //folder count patterns
+	FolderCount  map[string]int   //Folder Threshold Count Global
 	Stop bool
 }
 
@@ -169,7 +171,7 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 	}
 
 	//if folder threshold count has been exceeded return
-	if s.hasFolderThresholdExceeded(u){
+	if s.hasFolderThresholdExceededForPattern(u){
 		return
 	}
 
@@ -285,10 +287,26 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 		regexForResources := regexp.MustCompile("(\\.png|\\.jpg|\\.jpeg|\\.pdf|\\.gif|\\.docx|\\.mp4|\\.avi)")
 		resourceExtension := regexForResources.FindString(u.Path)
 
-		if resourceExtension != "" {
-			//modifiedFilePath = strings.Replace(filePath, ".html", resourceExtension, 1)
+		if resourceExtension != "" {  //if resource extension is other than .html do not download it's equivalent html file
 			return
 		}
+
+		/*
+		TODO:
+		Check folder count here:
+
+		if a/b/c/x/index.html --> get path a/b/c/x only and break it into a/b/c
+
+		if a/b/c exists,
+			map["a/b/c"]++
+		else
+		  map["a/b/c"]=1
+
+		 */
+		if s.hasFolderCountExceeded(u){
+			return
+		}
+
 
 		// always update html files, content might have changed
 		if err = s.writeFile(filePath, buf); err != nil {
@@ -320,8 +338,8 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 	}
 }
 
-
-func (s *Scraper) hasFolderThresholdExceeded(u *url.URL) bool{
+//checks folder count for specified patterns only
+func (s *Scraper) hasFolderThresholdExceededForPattern(u *url.URL) bool{
 
 	/*
 	TODO:
@@ -351,3 +369,40 @@ func (s *Scraper) hasFolderThresholdExceeded(u *url.URL) bool{
 	return false
 }
 
+func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder count globally
+	host:=u.Host
+	path:=u.Path
+
+	if path==""{   //no need to check initially when path is empty
+		return false
+	}
+	pathArr:=strings.Split(path,"/")
+
+	length:=len(pathArr)
+	if pathArr[length-1]!=""{  //if there is no slash at last, the html page is in same dir level
+		return false
+	}
+
+	//delete last two items
+	pathArr=pathArr[:length-2]
+
+	finalPath:=""
+	for _,v:=range pathArr{
+		if v!=""{
+			finalPath+="/"+v
+		}
+	}
+	finalPath+="/"
+	finalPath=host+finalPath
+
+	if _,ok:=s.Config.FolderCount[finalPath];!ok{
+		s.Config.FolderCount[finalPath]=1
+	}else{
+		if s.Config.FolderCount[finalPath]>=s.Config.FolderThreshold{
+			return true
+		}
+		s.Config.FolderCount[finalPath]++
+	}
+
+	return false
+}

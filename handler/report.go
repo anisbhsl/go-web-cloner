@@ -38,7 +38,6 @@ func Report(c *gin.Context) {
 	}
 	var finalReport scraper.Report
 	_ = json.Unmarshal(reportInBytes, &finalReport)
-
 	c.HTML(
 		http.StatusOK,
 		"index.tmpl",

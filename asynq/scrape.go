@@ -39,6 +39,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		FolderExamplesCount: s.FolderExamplesCount,
 		Patterns:            s.Patterns,
 		PatternCount:        initPatternCount(s.Patterns),
+		FolderCount:         make(map[string]int),
 		Stop:                false,
 	}
 	logger := logger()
@@ -83,6 +84,9 @@ func initPatternCount(patterns []string)(map[*regexp.Regexp]int){
 		return patternCount
 	}else{
 		for _,pa:=range patterns{
+			if pa==""{
+				continue
+			}
 			pattern:=strings.Replace(pa,"*",".*",-1)
 			//remove http and https prefix
 			if strings.Contains(pattern,"https://"){

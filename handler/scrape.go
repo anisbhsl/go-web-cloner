@@ -73,7 +73,7 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 			response["project_id"] = "default"
 			scrapeConfig.ProjectID = "default"
 		}
-		response["folder_threshold"] = scrapeConfig.FolderExamplesCount
+		response["folder_threshold"] = scrapeConfig.FolderThreshold
 		response["folder_examples_count"] = scrapeConfig.FolderExamplesCount
 		response["patterns"] = scrapeConfig.Patterns
 		response["max_depth"]=scrapeConfig.MaxDepth

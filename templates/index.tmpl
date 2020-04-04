@@ -52,6 +52,16 @@
 		     </tr>
 		</table>
 
+		<h3>Folder Counts</h3>
+		<table>
+		  <tr>
+		      <th>Path</th>
+		      <th>Count</th>
+		  </tr>
+
+		  <tr>
+
+
 		<h3>Detailed Report</h3>
 		<table>
               <tr>
@@ -67,7 +77,7 @@
                  <tr>
                     <td>  <a href="/api/redirect?url={{ .OriginURL }}"> {{ .OriginURL }}  </a>  </td>
                     <td><a href="{{.LocalURL}}">{{ .LocalURL }}</a></td>
-                    <td></td>
+                    <td>{{ .FolderCount }}</td>
                    <td>{{ .StatusCode }}</td>
                    <td>{{ .TimeStamp }}</td>
                    <td>{{ .ResponseTime }}</td>
