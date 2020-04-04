@@ -3,7 +3,6 @@ package scraper
 import (
 	"encoding/json"
 	"io/ioutil"
-	"strconv"
 	"time"
 )
 
@@ -32,25 +31,25 @@ func (s *Scraper) generateReport() error {
 	/*
 	Update folder counts for each pattern
 	 */
-	tempReport:=make([]DetailedReport, 0)
-	for _,val:=range s.report.DetailedReport{
-		if v:=s.Config.FolderCount[val.OriginURL];v==0{
-			val.FolderCount="-"
-		}else{
-			strCount:=strconv.Itoa(s.Config.FolderThreshold)
-			if s.Config.FolderCount[val.OriginURL]>=s.Config.FolderThreshold{
-				strCount="{"+strCount+"}"
-				val.FolderCount=strCount
-			}else{
-				val.FolderCount=strCount
-			}
-		}
-
-		tempReport=append(tempReport,val)
-
-	}
-
-	s.report.DetailedReport=tempReport
+	//tempReport:=make([]DetailedReport, 0)
+	//for _,val:=range s.report.DetailedReport{
+	//	if v:=s.Config.FolderCount[val.OriginURL];v==0{
+	//		val.FolderCount="-"
+	//	}else{
+	//		strCount:=strconv.Itoa(s.Config.FolderThreshold)
+	//		if s.Config.FolderCount[val.OriginURL]>=s.Config.FolderThreshold{
+	//			strCount="{"+strCount+"}"
+	//			val.FolderCount=strCount
+	//		}else{
+	//			val.FolderCount=strCount
+	//		}
+	//	}
+	//
+	//	tempReport=append(tempReport,val)
+	//
+	//}
+	//
+	//s.report.DetailedReport=tempReport
 	file, err := json.Marshal(s.report)
 	if err != nil {
 		return err

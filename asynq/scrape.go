@@ -39,7 +39,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		FolderExamplesCount: s.FolderExamplesCount,
 		Patterns:            s.Patterns,
 		PatternCount:        initPatternCount(s.Patterns),
-		FolderCount:         make(map[string]int),
+		FolderCount:         make(map[string]map[string]bool),
 		Stop:                false,
 	}
 	logger := logger()

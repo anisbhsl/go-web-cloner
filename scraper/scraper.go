@@ -38,7 +38,7 @@ type Config struct {
 	FolderExamplesCount int      `json:"folder_examples_count"`
 	Patterns            []string `json:"patterns"`
 	PatternCount map[*regexp.Regexp]int //folder count patterns
-	FolderCount  map[string]int   //Folder Threshold Count Global
+	FolderCount  map[string]map[string]bool //Folder Threshold Count Global
 	Stop bool
 }
 
@@ -379,29 +379,143 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	pathArr:=strings.Split(path,"/")
 
 	length:=len(pathArr)
+	if length<=2{
+		return false //its for urls like www.example.com/mylist
+	}
+
+	newPathArr:=[]string{} //will hold path array only
+	for _,val:=range pathArr{
+		if val!=""{
+			newPathArr=append(newPathArr,val)
+		}
+	}
+
 	if pathArr[length-1]!=""{  //if there is no slash at last, the html page is in same dir level
+
+
+		finalPath:=host+"/"
+		//for host part
+		if val,ok:=s.Config.FolderCount[finalPath];!ok{
+			folder:=make(map[string]bool)
+			folder[newPathArr[0]]=true
+			s.Config.FolderCount[finalPath]=folder
+			f:=fmt.Sprintf("1: 1st hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+			s.log.Info(f)
+		}else{
+			l:=len(val)
+			if l>=s.Config.FolderThreshold{
+				if _,o:=val[newPathArr[0]];!o{
+					s.log.Info("folder threshold reached 403 line")
+					return true
+				}
+
+			}else{
+				//if not add folder
+				val[newPathArr[0]]=true
+				s.Config.FolderCount[finalPath]=val //update folders
+
+				f:=fmt.Sprintf("2: 1st hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+				s.log.Info(f)
+			}
+
+		}
+
+
+		//for later path
+		length=len(newPathArr)
+		for i:=0;i<length-2;i++{
+
+			finalPath+=newPathArr[i]
+			finalPath+="/"
+
+			if val,ok:=s.Config.FolderCount[finalPath];!ok{
+				folder:=make(map[string]bool)
+				folder[newPathArr[i+1]]=true
+				s.Config.FolderCount[finalPath]=folder
+
+				f:=fmt.Sprintf("1: 1st folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+				s.log.Info(f)
+			}else{
+				l:=len(val)
+				if l>=s.Config.FolderThreshold{
+					if _,o:=val[newPathArr[i+1]];o{
+						continue
+					}
+					s.log.Info("folder threshold reached 403 line")
+					return true
+				}
+				//if not add folder
+				val[newPathArr[i+1]]=true
+				s.Config.FolderCount[finalPath]=val //update folders
+				f:=fmt.Sprintf("2: 1st folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+				s.log.Info(f)
+			}
+			//finalPath=strings.TrimSuffix(finalPath,"/")
+		}
 		return false
 	}
 
-	//delete last two items
-	pathArr=pathArr[:length-2]
+	///if last part is actually a folder
+	finalPath:=host+"/"
 
-	finalPath:=""
-	for _,v:=range pathArr{
-		if v!=""{
-			finalPath+="/"+v
-		}
-	}
-	finalPath+="/"
-	finalPath=host+finalPath
+	//for host part
+	if val,ok:=s.Config.FolderCount[finalPath];!ok{
+		folder:=make(map[string]bool)
+		folder[newPathArr[0]]=true
+		s.Config.FolderCount[finalPath]=folder
 
-	if _,ok:=s.Config.FolderCount[finalPath];!ok{
-		s.Config.FolderCount[finalPath]=1
+		f:=fmt.Sprintf("1: 2nd hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+		s.log.Info(f)
 	}else{
-		if s.Config.FolderCount[finalPath]>=s.Config.FolderThreshold{
-			return true
+		l:=len(val)
+		if l>=s.Config.FolderThreshold{
+			if _,o:=val[newPathArr[0]];!o {
+				s.log.Info("folder threshold reached 443 second case i.e. last part dir")
+				return true
+			}
+		}else{
+			//if not add folder
+			val[newPathArr[0]]=true
+			s.Config.FolderCount[finalPath]=val
+			f:=fmt.Sprintf("2: 2nd ko host folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+			s.log.Info(f)
 		}
-		s.Config.FolderCount[finalPath]++
+
+
+	}
+
+	//for later path
+	length=len(newPathArr)
+	if length==1{
+		return false
+	}
+
+	for i:=0;i<length-1;i++{
+		finalPath+=newPathArr[i]
+		finalPath+="/"
+
+		if val,ok:=s.Config.FolderCount[finalPath];!ok{
+			folder:=make(map[string]bool)
+			folder[newPathArr[i+1]]=true
+			s.Config.FolderCount[finalPath]=folder
+			f:=fmt.Sprintf("1: 2nd folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+			s.log.Info(f)
+		}else{
+			l:=len(val)
+			if l>=s.Config.FolderThreshold{
+				if _,o:=val[newPathArr[i+1]];o{
+					continue
+				}
+				s.log.Info("folder threshold reached 403 line")
+				return true  //TODO: need good logic here
+			}
+			//if not add folder
+			val[newPathArr[i+1]]=true
+			s.Config.FolderCount[finalPath]=val //update folders
+			f:=fmt.Sprintf("2: 2nd folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
+			s.log.Info(f)
+		}
+		//finalPath=strings.TrimSuffix(finalPath,"/")
 	}
 
 	return false
