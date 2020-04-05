@@ -3,6 +3,8 @@ package scraper
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,8 +33,41 @@ func (s *Scraper) generateReport() error {
 	/*
 	Update folder counts for each pattern
 	 */
-	//tempReport:=make([]DetailedReport, 0)
-	//for _,val:=range s.report.DetailedReport{
+	tempReport:=make([]DetailedReport, 0)
+	for _,val:=range s.report.DetailedReport{
+		url:=val.OriginURL
+		urlArr:=strings.Split(url,"/")
+		length:=len(urlArr)
+		path:=""
+		if length<=2{  //its host only
+			path=urlArr[0]+"/"
+		}else{
+			if urlArr[length-1]==""{
+				for i:=0;i<length-2;i++{
+					path+=urlArr[i]+"/"
+				}
+			}else{
+				for i:=0;i<length-1;i++{
+					path+=urlArr[i]+"/"
+				}
+			}
+		}
+
+		if v,ok:=s.Config.FolderCount[path];!ok{
+			val.FolderCount="0"
+		}else{
+			count:=len(v)
+			strCount:=strconv.Itoa(count)
+			if count>=s.Config.FolderThreshold{
+				strCount="{"+strCount+"}"
+				val.FolderCount=strCount
+			}else{
+				val.FolderCount=strCount
+			}
+		}
+
+		tempReport=append(tempReport,val)
+
 	//	if v:=s.Config.FolderCount[val.OriginURL];v==0{
 	//		val.FolderCount="-"
 	//	}else{
@@ -47,9 +82,9 @@ func (s *Scraper) generateReport() error {
 	//
 	//	tempReport=append(tempReport,val)
 	//
-	//}
-	//
-	//s.report.DetailedReport=tempReport
+	}
+
+	s.report.DetailedReport=tempReport
 	file, err := json.Marshal(s.report)
 	if err != nil {
 		return err

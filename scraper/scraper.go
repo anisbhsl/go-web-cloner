@@ -170,7 +170,29 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		return
 	}
 
+
+	/*
+		TODO:
+		Check folder count here:
+
+		if a/b/c/x/index.html --> get path a/b/c/x only and break it into a/b/c
+
+		if a/b/c exists,
+			map["a/b/c"]++
+		else
+		  map["a/b/c"]=1
+
+	*/
+
+	//if folder count threshold has exceeded
+	//do not visit any links just return
+	if s.hasFolderCountExceeded(u){
+		return
+	}
+
+
 	//if folder threshold count has been exceeded return
+	//do not visit any links inside
 	if s.hasFolderThresholdExceededForPattern(u){
 		return
 	}
@@ -196,6 +218,7 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		s.log.Error("Request failed",
 			zap.Stringer("URL", u),
 			zap.Int("http_status_code", c))
+
 
 		currentTime := time.Now()
 		details := DetailedReport{
@@ -291,23 +314,6 @@ func (s *Scraper) storePage(u *url.URL, buf *bytes.Buffer, startTime time.Time) 
 			return
 		}
 
-		/*
-		TODO:
-		Check folder count here:
-
-		if a/b/c/x/index.html --> get path a/b/c/x only and break it into a/b/c
-
-		if a/b/c exists,
-			map["a/b/c"]++
-		else
-		  map["a/b/c"]=1
-
-		 */
-		if s.hasFolderCountExceeded(u){
-			return
-		}
-
-
 		// always update html files, content might have changed
 		if err = s.writeFile(filePath, buf); err != nil {
 			s.log.Error("Writing HTML to file failed",
@@ -399,13 +405,11 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			folder:=make(map[string]bool)
 			folder[newPathArr[0]]=true
 			s.Config.FolderCount[finalPath]=folder
-			f:=fmt.Sprintf("1: 1st hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-			s.log.Info(f)
 		}else{
 			l:=len(val)
 			if l>=s.Config.FolderThreshold{
 				if _,o:=val[newPathArr[0]];!o{
-					s.log.Info("folder threshold reached 403 line")
+					s.log.Info("folder threshold reached")
 					return true
 				}
 
@@ -414,8 +418,6 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 				val[newPathArr[0]]=true
 				s.Config.FolderCount[finalPath]=val //update folders
 
-				f:=fmt.Sprintf("2: 1st hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-				s.log.Info(f)
 			}
 
 		}
@@ -433,22 +435,18 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 				folder[newPathArr[i+1]]=true
 				s.Config.FolderCount[finalPath]=folder
 
-				f:=fmt.Sprintf("1: 1st folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-				s.log.Info(f)
 			}else{
 				l:=len(val)
 				if l>=s.Config.FolderThreshold{
 					if _,o:=val[newPathArr[i+1]];o{
 						continue
 					}
-					s.log.Info("folder threshold reached 403 line")
+					s.log.Info("folder threshold reached")
 					return true
 				}
 				//if not add folder
 				val[newPathArr[i+1]]=true
 				s.Config.FolderCount[finalPath]=val //update folders
-				f:=fmt.Sprintf("2: 1st folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-				s.log.Info(f)
 			}
 			//finalPath=strings.TrimSuffix(finalPath,"/")
 		}
@@ -464,8 +462,6 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 		folder[newPathArr[0]]=true
 		s.Config.FolderCount[finalPath]=folder
 
-		f:=fmt.Sprintf("1: 2nd hostfolder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-		s.log.Info(f)
 	}else{
 		l:=len(val)
 		if l>=s.Config.FolderThreshold{
@@ -477,8 +473,6 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			//if not add folder
 			val[newPathArr[0]]=true
 			s.Config.FolderCount[finalPath]=val
-			f:=fmt.Sprintf("2: 2nd ko host folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-			s.log.Info(f)
 		}
 
 
@@ -498,8 +492,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			folder:=make(map[string]bool)
 			folder[newPathArr[i+1]]=true
 			s.Config.FolderCount[finalPath]=folder
-			f:=fmt.Sprintf("1: 2nd folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-			s.log.Info(f)
+
 		}else{
 			l:=len(val)
 			if l>=s.Config.FolderThreshold{
@@ -507,13 +500,12 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 					continue
 				}
 				s.log.Info("folder threshold reached 403 line")
-				return true  //TODO: need good logic here
+				return true
 			}
 			//if not add folder
 			val[newPathArr[i+1]]=true
 			s.Config.FolderCount[finalPath]=val //update folders
-			f:=fmt.Sprintf("2: 2nd folder count hai %v %v",finalPath,s.Config.FolderCount[finalPath])
-			s.log.Info(f)
+
 		}
 		//finalPath=strings.TrimSuffix(finalPath,"/")
 	}
