@@ -30,6 +30,7 @@ type Config struct {
 	OutputDirectory     string
 	Username            string
 	Password            string
+	AccessToken         string
 	ProjectID           string
 	ScrapeID            string
 	ScreenWidth         int      `json:"screen_width"`
@@ -147,9 +148,12 @@ func (s *Scraper) Start() error {
 	}
 	s.processed[p] = struct{}{}
 
-	if s.Config.Username != "" {
+	if s.Config.Username != "" && s.Config.Password!=""{
 		auth := base64.StdEncoding.EncodeToString([]byte(s.Config.Username + ":" + s.Config.Password))
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
+	}else if s.Config.AccessToken!=""{
+		s.log.Info("Setting request header ",zap.String("access token",s.Config.AccessToken))
+		s.browser.AddRequestHeader("Authorization","Bearer "+s.Config.AccessToken)
 	}
 
 
@@ -170,11 +174,8 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		return
 	}
 
-
 	/*
-		TODO:
 		Check folder count here:
-
 		if a/b/c/x/index.html --> get path a/b/c/x only and break it into a/b/c
 
 		if a/b/c exists,
@@ -214,11 +215,11 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		s.report.DetailedReport = append(s.report.DetailedReport, details)
 		return
 	}
+
 	if c := s.browser.StatusCode(); c != http.StatusOK {
 		s.log.Error("Request failed",
 			zap.Stringer("URL", u),
 			zap.Int("http_status_code", c))
-
 
 		currentTime := time.Now()
 		details := DetailedReport{

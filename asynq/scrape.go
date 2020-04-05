@@ -13,6 +13,7 @@ type ScrapeConfig struct {
 	ScreenHeight        int      `json:"screen_height"`
 	Username            string   `json:"username"`
 	Password            string   `json:"password"`
+	AccessToken         string   `json:"access_token"`
 	ProjectID           string   `json:"project_id,omitempty"`
 	FolderThreshold     int      `json:"folder_threshold"`
 	FolderExamplesCount int      `json:"folder_examples_count"`
@@ -31,6 +32,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		OutputDirectory:     "data/" + s.ProjectID + "/" + scrapeID, //set output directory
 		Username:            s.Username,
 		Password:            s.Password,
+		AccessToken:         s.AccessToken,
 		ProjectID:           s.ProjectID,
 		ScrapeID:            scrapeID,
 		ScreenWidth:         s.ScreenWidth,
