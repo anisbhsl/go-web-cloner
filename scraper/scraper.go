@@ -390,7 +390,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	pathArr:=strings.Split(path,"/")
 
 	length:=len(pathArr)
-	if length<=2{
+	if length<2 || pathArr[1]!=""{ //TODO: work on this logic here man
 		return false //its for urls like www.example.com/mylist
 	}
 
