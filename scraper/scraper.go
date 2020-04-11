@@ -384,18 +384,19 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	host:=u.Host
 	path:=u.Path
 
-	if path==""{   //no need to check initially when path is empty
+	if path=="" || path=="/"{   //no need to check initially when path is empty
 		return false
 	}
+	s.log.Info("path",zap.String("path: ",path))
 	pathArr:=strings.Split(path,"/")
 
 	length:=len(pathArr)
+	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
+
 	if length<2 { //TODO: work on this logic here man
 		return false
 	}
-	if length==2 && pathArr[1]!=""{
-		return false
-	}
+	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
 
 	newPathArr:=[]string{} //will hold path array only
 	for _,val:=range pathArr{
@@ -403,7 +404,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			newPathArr=append(newPathArr,val)
 		}
 	}
-
+	s.log.Info("newPathArr: ",zap.Strings("newPathArr:",newPathArr))
 	//if pathArr[length-1]!=""{  //if there is no slash at last, the html page is in same dir level
 
 
@@ -420,7 +421,6 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 				s.log.Info("folder threshold reached")
 				return true
 			}
-
 		}else{
 			//if not add folder
 			val[newPathArr[0]]=true
