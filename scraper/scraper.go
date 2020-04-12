@@ -425,11 +425,8 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			//if not add folder
 			val[newPathArr[0]]=true
 			s.Config.FolderCount[finalPath]=val //update folders
-
 		}
-
 	}
-
 
 	//for later path
 	length=len(newPathArr)

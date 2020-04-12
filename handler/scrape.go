@@ -50,6 +50,7 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		}
 
 
+
 		if ok:=dispatcher.IsWorkerAvailable();!ok{
 			response["msg"]="Scrapper Running Another Job"
 			response["scrape_id"]=dispatcher.Queue
@@ -58,6 +59,10 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 				response,
 				)
 			return
+		}
+
+		if scrapeConfig.FolderExamplesCount==0{
+			scrapeConfig.FolderExamplesCount=scrapeConfig.FolderThreshold
 		}
 
 		//send response
