@@ -151,7 +151,8 @@ func (s *Scraper) Start() error {
 	if s.Config.Username != "" && s.Config.Password!=""{
 		auth := base64.StdEncoding.EncodeToString([]byte(s.Config.Username + ":" + s.Config.Password))
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
-	}else if s.Config.AccessToken!=""{
+	}
+	if s.Config.AccessToken!=""{
 		s.log.Info("Setting request header ",zap.String("access token",s.Config.AccessToken))
 		s.browser.AddRequestHeader("Authorization","Bearer "+s.Config.AccessToken)
 	}
