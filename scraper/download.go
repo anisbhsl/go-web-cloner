@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/headzoo/surf/browser"
+	"go-web-cloner/surf/browser"
 	"go.uber.org/zap"
 )
 

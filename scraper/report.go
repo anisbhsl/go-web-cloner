@@ -3,6 +3,7 @@ package scraper
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -58,7 +59,6 @@ func (s *Scraper) generateReport() error {
 		if v,ok:=s.Config.FolderCount[path];!ok{
 			val.FolderCount="0"
 		}else{
-			//TODO: check for folder example count hai guys
 			count:=len(v)
 			strCount:=strconv.Itoa(count)
 			if count>=s.Config.FolderThreshold{
@@ -72,6 +72,7 @@ func (s *Scraper) generateReport() error {
 	}
 
 	finalReport:=make([]DetailedReport,0)
+	urlToSort:=[]string{}
 
 	for _,val:=range tempReport{
 		url:=val.OriginURL
@@ -104,11 +105,24 @@ func (s *Scraper) generateReport() error {
 				}
 			}
 		}
+		urlToSort=append(urlToSort,val.OriginURL)
 		finalReport=append(finalReport,val)
 	}
 
+	//sorts in ascending order
+	sort.Strings(urlToSort)
+	sortedReport:=make([]DetailedReport,0)
+	for _,url:=range urlToSort{
+		for _,val:=range finalReport{
+			if val.OriginURL==url{
+				sortedReport=append(sortedReport,val)
+				break
+			}
+		}
+	}
 
-	s.report.DetailedReport=finalReport
+
+	s.report.DetailedReport=sortedReport
 	file, err := json.Marshal(s.report)
 	if err != nil {
 		return err

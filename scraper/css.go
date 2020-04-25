@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/css/scanner"
-	"github.com/headzoo/surf/browser"
+	"go-web-cloner/surf/browser"
 	"go.uber.org/zap"
 )
 

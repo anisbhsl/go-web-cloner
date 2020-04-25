@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
-	"github.com/headzoo/surf"
-	"github.com/headzoo/surf/agent"
-	"github.com/headzoo/surf/browser"
+	"go-web-cloner/surf"
+	"go-web-cloner/surf/agent"
+	"go-web-cloner/surf/browser"
 	"go.uber.org/zap"
 	"net/http"
 	"net/url"
@@ -153,12 +153,14 @@ func (s *Scraper) Start() error {
 
 		auth := base64.StdEncoding.EncodeToString([]byte(s.Config.Username + ":" + s.Config.Password))
 		s.browser.AddRequestHeader("Authorization", "Basic "+auth)
+		s.log.Info("basic auth encoded: ",zap.String("auth: ",auth))
 	}
 
-	if s.Config.AccessToken!=""{
-		s.log.Info("Setting request header ",zap.String("access token",s.Config.AccessToken))
-		s.browser.AddRequestHeader("Authorization","Bearer "+s.Config.AccessToken)
-	}
+
+	//if s.Config.AccessToken!=""{
+	//	s.log.Info("Setting request header ",zap.String("access token",s.Config.AccessToken))
+	//	s.browser.AddRequestHeader("Authorization","Bearer "+s.Config.AccessToken)
+	//}
 
 
 	s.downloadPage(s.URL, 0, time.Now())
@@ -177,7 +179,6 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		s.log.Info("Stop Command Received ==> Stopping scrapper...")
 		return
 	}
-
 	/*
 		Check folder count here:
 		if a/b/c/x/index.html --> get path a/b/c/x only and break it into a/b/c
@@ -186,15 +187,12 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 			map["a/b/c"]++
 		else
 		  map["a/b/c"]=1
-
 	*/
-
 	//if folder count threshold has exceeded
 	//do not visit any links just return
 	if s.hasFolderCountExceeded(u){
 		return
 	}
-
 
 	//if folder threshold count has been exceeded return
 	//do not visit any links inside
@@ -220,7 +218,10 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		return
 	}
 
-	if c := s.browser.StatusCode(); c != http.StatusOK {
+	if c := s.browser.StatusCode(); c !=http.StatusOK {
+
+		s.log.Info("connection header: ",zap.String("header=>",s.browser.ResponseHeaders().Get("Connection")))
+
 		s.log.Error("Request failed",
 			zap.Stringer("URL", u),
 			zap.Int("http_status_code", c))
@@ -237,6 +238,7 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 
 		return
 	}
+
 
 	buf := &bytes.Buffer{}
 	if _, err := s.browser.Download(buf); err != nil {
