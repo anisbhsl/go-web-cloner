@@ -13,7 +13,6 @@ import (
 // a downloaded file content before it will be stored on disk.
 type assetProcessor func(URL *url.URL, buf *bytes.Buffer) *bytes.Buffer
 
-//TODO: don't store these content urls in report
 func (s *Scraper) downloadReferences() {
 	for _, image := range s.browser.Images() {
 		s.imagesQueue = append(s.imagesQueue, &image.DownloadableAsset)
