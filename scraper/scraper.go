@@ -190,12 +190,14 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 	*/
 	//if folder count threshold has exceeded
 	//do not visit any links just return
+
 	if s.hasFolderCountExceeded(u){
 		return
 	}
 
 	//if folder threshold count has been exceeded return
 	//do not visit any links inside
+
 	if s.hasFolderThresholdExceededForPattern(u){
 		return
 	}
@@ -269,19 +271,19 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 	s.storePage(u, buf, startTime)
 
 	s.downloadReferences()
-
+	//fmt.Println("browser links: ",s.browser.Links())
 	var toScrape []*url.URL
 	// check first and download afterwards to not hit max depth limit for
 	// start page links because of recursive linking
-
-	//TODO: this checks depth of URL hai guys
+	//this checks depth of URL
 	for _, link := range s.browser.Links() {
 		if s.checkPageURL(link.URL, currentDepth) {
+			fmt.Println("browser link: ",link.URL)
 			toScrape = append(toScrape, link.URL)
 		}
 	}
 
-	//TODO: recursive downloading :)
+	//recursive downloading
 	for _, URL := range toScrape {
 		s.downloadPage(URL, currentDepth+1, time.Now())
 	}
@@ -393,16 +395,16 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	if path=="" || path=="/"{   //no need to check initially when path is empty
 		return false
 	}
-	s.log.Info("path",zap.String("path: ",path))
+	//s.log.Info("path",zap.String("path: ",path))
 	pathArr:=strings.Split(path,"/")
 
 	length:=len(pathArr)
-	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
+	//s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
 
 	if length<2 { //TODO: work on this logic here man
 		return false
 	}
-	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
+	//s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
 
 	newPathArr:=[]string{} //will hold path array only
 	for _,val:=range pathArr{
@@ -410,7 +412,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 			newPathArr=append(newPathArr,val)
 		}
 	}
-	s.log.Info("newPathArr: ",zap.Strings("newPathArr:",newPathArr))
+	//s.log.Info("newPathArr: ",zap.Strings("newPathArr:",newPathArr))
 	//if pathArr[length-1]!=""{  //if there is no slash at last, the html page is in same dir level
 
 
