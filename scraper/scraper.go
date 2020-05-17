@@ -397,12 +397,12 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	pathArr:=strings.Split(path,"/")
 
 	length:=len(pathArr)
-	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
+	s.log.Info("PathArr --->",zap.Strings("pathArr:",pathArr))
 
-	if length<2 { //TODO: work on this logic here man
+	if length<2 {                 //TODO: work on this logic here man
 		return false
 	}
-	s.log.Info("PathArr: ",zap.Strings("pathArr:",pathArr))
+	s.log.Info(" PathArr ----> ",zap.Strings("pathArr:",pathArr))
 
 	newPathArr:=[]string{} //will hold path array only
 	for _,val:=range pathArr{

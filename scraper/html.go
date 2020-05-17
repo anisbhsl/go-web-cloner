@@ -1,12 +1,12 @@
 package scraper
 
 import (
+	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"go.uber.org/zap"
 	"io"
 	"net/url"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	"go.uber.org/zap"
 )
 
 func (s *Scraper) fixFileReferences(url *url.URL, buf io.Reader) (string, error) {
@@ -74,8 +74,11 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 	tmpSrc:=src
 	finalPath:=""
 
-	println("url is: ",url.Host+url.Path)
-	println("src is: ",src)
+	//println("src is: ",src)
+	//if strings.Contains(src,"pricing-options"){
+	//	time.Sleep(10*time.Second)
+	//}
+
 
 	if strings.Contains(tmpSrc,"http://") || strings.Contains(tmpSrc,"https://") {
 		protocol:=""
@@ -116,25 +119,26 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 				//provide an already existing one as url
 				path:=strings.TrimPrefix(finalPath,url.Host)
 
+				i:=0
 				for k,_:=range val{
-					//if strings.Contains(k,".html"){
-					//	path+=k
-					//}else{
-						path+=k+"/"
-					//}
+					if i==0{
+						i++
+						continue
+					}
+					path+=k+"/"
 					break
 				}
-				tmpSrc=protocol+url.Host+"/"+path
+				tmpSrc=protocol+url.Host+path
 				src=tmpSrc
 			}
 		}
 	}
-
+	fmt.Println("src changed into : ",src)
 	resolved := s.resolveURL(url, src, linkIsAPage, relativeToRoot)
 	if src == resolved { // nothing changed
 		return
 	}
-
+	fmt.Println("resolved into: ",resolved)
 	s.log.Debug("HTML Element relinked", zap.String("URL", src), zap.String("Fixed", resolved))
 	selection.SetAttr(attribute, resolved)
 
