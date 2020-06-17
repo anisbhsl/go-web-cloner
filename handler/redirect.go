@@ -12,6 +12,8 @@ func Redirect(c *gin.Context){
 	//url:=c.Param("url")
 	url:=c.Query("url")
 	log.Println("[[INFO]] Redirect request to: ",url)
+	c.Writer.Header().Set("Access-Control-Allow-Origin","*")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	c.Redirect(307,"http://"+url)
 	return
 }

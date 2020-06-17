@@ -7,3 +7,4 @@ WORKDIR ${APP_HOME}
 COPY . .
 
 CMD ["./go-web-cloner"]
+

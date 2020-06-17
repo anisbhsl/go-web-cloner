@@ -11,7 +11,8 @@ func Index(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		response := make(map[string]interface{})
 		response["msg"] = "Website Cloner"
 		response["status"] = "Under Development : WIP"
-
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Origin","*")
 		c.JSON(
 			http.StatusOK,
 			response,

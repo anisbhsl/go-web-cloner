@@ -22,6 +22,8 @@ func Status(dispatcher *asyncq.Dispatcher) gin.HandlerFunc {
 		}
 
 		response["status"] = "IDLE"
+		c.Writer.Header().Set("Access-Control-Allow-Origin","*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		c.JSON(
 			http.StatusOK,
 			response,

@@ -38,6 +38,9 @@ func Report(c *gin.Context) {
 	}
 	var finalReport scraper.Report
 	_ = json.Unmarshal(reportInBytes, &finalReport)
+
+	c.Writer.Header().Set("Access-Control-Allow-Origin","*")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	c.HTML(
 		http.StatusOK,
 		"index.tmpl",

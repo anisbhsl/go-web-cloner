@@ -24,6 +24,8 @@ func Stop(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		dispatcher.StopScrapper() //stop running job
 
 		response["msg"]=fmt.Sprintf("Scrapping Stopped for scrape_id: %v",dispatcher.Queue)
+		c.Writer.Header().Set("Access-Control-Allow-Origin","*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		c.JSON(
 			http.StatusOK,
 			response,
