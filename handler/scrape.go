@@ -86,9 +86,6 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		dispatcher.Queue=append(dispatcher.Queue,scrapeID) //enqueue a job
 		go dispatcher.StartScrapper(scrapeConfig,scrapeID)  //run async
 
-		c.Writer.Header().Set("Access-Control-Allow-Origin","*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-
 		c.JSON(
 			http.StatusOK,
 			response,

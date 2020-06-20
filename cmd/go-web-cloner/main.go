@@ -1,10 +1,11 @@
 package main
 
 import (
+	"github.com/gin-gonic/contrib/cors"
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	asyncq "go-web-cloner/asynq"
-	"github.com/gin-gonic/contrib/static"
 	"go-web-cloner/handler"
 	"log"
 	"os"
@@ -32,7 +33,7 @@ func main(){
 	router.LoadHTMLGlob("templates/*")
 	//router.Static("/data","./data")
 
-	router.Use(static.Serve("/data",static.LocalFile("./data",true)))
+	router.Use(cors.Default(),static.Serve("/data",static.LocalFile("./data",true)))
 	router.GET("/",handler.Index(dispatcher))
 	router.GET("/api",handler.Index(dispatcher))
 	router.POST("/api/scrape", handler.Scrape(dispatcher))
