@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func (s *Scraper) fixFileReferences(url *url.URL, buf io.Reader) (string, error) {
@@ -61,10 +62,7 @@ func (s *Scraper) fixQuerySelection(url *url.URL, attribute string, selection *g
 func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, selection *goquery.Selection,
 	linkIsAPage bool,relativeToRoot string){
 
-	/*
-		URL : url => columbus-internet.com/de/technologien/
 
-	*/
 	src, ok := selection.Attr(attribute)
 	if !ok {
 		return
@@ -74,13 +72,17 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 	tmpSrc:=src
 	finalPath:=""
 
-	//println("src is: ",src)
-	//if strings.Contains(src,"pricing-options"){
-	//	time.Sleep(10*time.Second)
-	//}
+	println("src is: ",src)
+	var hostPresent bool
+	hostPresent=true
 
+	//if strings.Contains(tmpSrc,"http://") || strings.Contains(tmpSrc,"https://") {
+	if tmpSrc!="#" && tmpSrc!="/"{
+		if !strings.Contains(tmpSrc,url.Host){
+			hostPresent=false
+			tmpSrc=url.Host+"/"+tmpSrc
+		}
 
-	if strings.Contains(tmpSrc,"http://") || strings.Contains(tmpSrc,"https://") {
 		protocol:=""
 		if strings.Contains(tmpSrc,"https://"){
 			protocol="https://"
@@ -95,6 +97,13 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 		//	time.Sleep(5*time.Second)
 		//}
 
+		if strings.Contains(tmpSrc,".html"){
+			if !strings.Contains(tmpSrc,"index.html"){
+				println("doesn't contain index.html but has other .html page hai")
+				time.Sleep(2*time.Second)
+			}
+		}
+
 		pathArr:=strings.Split(tmpSrc,"/")
 		newPathArr:=[]string{}
 		for _,val:=range pathArr{
@@ -103,12 +112,11 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 			}
 		}
 
-
 		length:=len(newPathArr)
 		for i:=0;i<length-1;i++{
 				finalPath+= newPathArr[i] + "/"
-
 		}
+		println("new path arr is : ",newPathArr)
 
 		if val,ok:=s.Config.FolderCount[finalPath];ok && length!=0{
 			println("match coming inside for: ",finalPath)
@@ -119,29 +127,32 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 				//provide an already existing one as url
 				path:=strings.TrimPrefix(finalPath,url.Host)
 
-				i:=0
 				for k,_:=range val{
-					if i==0{
-						i++
-						continue
+					if pathArr[len(pathArr)-1]==""{
+						path+=k +"/"
+					}else{
+						path+=k
 					}
-					path+=k+"/"
 					break
 				}
-				tmpSrc=protocol+url.Host+path
+				if hostPresent{
+					tmpSrc=protocol+url.Host+path
+				}else{
+					tmpSrc=path
+				}
 				src=tmpSrc
 			}
 		}
 	}
+
 	fmt.Println("src changed into : ",src)
+
 	resolved := s.resolveURL(url, src, linkIsAPage, relativeToRoot)
 	if src == resolved { // nothing changed
 		return
 	}
+
 	fmt.Println("resolved into: ",resolved)
 	s.log.Debug("HTML Element relinked", zap.String("URL", src), zap.String("Fixed", resolved))
 	selection.SetAttr(attribute, resolved)
-
-
-
 }

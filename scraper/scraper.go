@@ -105,8 +105,8 @@ func New(logger *zap.Logger, cfg Config) (*Scraper, error) {
 			ProjectID:           cfg.ProjectID,
 			ScrapeID:            cfg.ScrapeID,
 			URL:                 cfg.URL,
-			ScreenWidth:         cfg.ScreenWidth,
-			ScreenHeight:        cfg.ScreenHeight,
+			//ScreenWidth:         cfg.ScreenWidth,
+			//ScreenHeight:        cfg.ScreenHeight,
 			FolderThreshold:     cfg.FolderThreshold,
 			FolderExamplesCount: cfg.FolderExamplesCount,
 			Patterns:            cfg.Patterns,
@@ -156,12 +156,10 @@ func (s *Scraper) Start() error {
 		s.log.Info("basic auth encoded: ",zap.String("auth: ",auth))
 	}
 
-
 	//if s.Config.AccessToken!=""{
 	//	s.log.Info("Setting request header ",zap.String("access token",s.Config.AccessToken))
 	//	s.browser.AddRequestHeader("Authorization","Bearer "+s.Config.AccessToken)
 	//}
-
 
 	s.downloadPage(s.URL, 0, time.Now())
 
@@ -274,14 +272,12 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 	// check first and download afterwards to not hit max depth limit for
 	// start page links because of recursive linking
 
-	//TODO: this checks depth of URL hai guys
 	for _, link := range s.browser.Links() {
 		if s.checkPageURL(link.URL, currentDepth) {
 			toScrape = append(toScrape, link.URL)
 		}
 	}
 
-	//TODO: recursive downloading :)
 	for _, URL := range toScrape {
 		s.downloadPage(URL, currentDepth+1, time.Now())
 	}
@@ -419,6 +415,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 	if val,ok:=s.Config.FolderCount[finalPath];!ok{
 		folder:=make(map[string]bool)
 		folder[newPathArr[0]]=true
+
 		s.Config.FolderCount[finalPath]=folder
 	}else{
 		l:=len(val)
@@ -443,6 +440,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 
 		if val,ok:=s.Config.FolderCount[finalPath];!ok{
 			folder:=make(map[string]bool)
+
 			folder[newPathArr[i+1]]=true
 			s.Config.FolderCount[finalPath]=folder
 
@@ -461,63 +459,4 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 		}
 	}
 	return false
-	////}
-	//
-	/////if last part is actually a folder
-	////finalPath:=host+"/"
-	////
-	//////for host part
-	////if val,ok:=s.Config.FolderCount[finalPath];!ok{
-	////	folder:=make(map[string]bool)
-	////	folder[newPathArr[0]]=true
-	////	s.Config.FolderCount[finalPath]=folder
-	////
-	////}else{
-	////	l:=len(val)
-	////	if l>=s.Config.FolderThreshold{
-	////		if _,o:=val[newPathArr[0]];!o {
-	////			s.log.Info("folder threshold reached 443 second case i.e. last part dir")
-	////			return true
-	////		}
-	////	}else{
-	////		//if not add folder
-	////		val[newPathArr[0]]=true
-	////		s.Config.FolderCount[finalPath]=val
-	////	}
-	////
-	////
-	////}
-	//
-	////for later path
-	////length=len(newPathArr)
-	////if length==1{
-	////	return false
-	////}
-	////
-	////for i:=0;i<length-1;i++{
-	////	finalPath+=newPathArr[i]
-	////	finalPath+="/"
-	////
-	////	if val,ok:=s.Config.FolderCount[finalPath];!ok{
-	////		folder:=make(map[string]bool)
-	////		folder[newPathArr[i+1]]=true
-	////		s.Config.FolderCount[finalPath]=folder
-	////
-	////	}else{
-	////		l:=len(val)
-	////		if l>=s.Config.FolderThreshold{
-	////			if _,o:=val[newPathArr[i+1]];o{
-	////				continue
-	////			}
-	////			s.log.Info("folder threshold reached 403 line")
-	////			return true
-	////		}
-	////		//if not add folder
-	//		val[newPathArr[i+1]]=true
-	//		s.Config.FolderCount[finalPath]=val //update folders
-	//
-	//	}
-	//	//finalPath=strings.TrimSuffix(finalPath,"/")
-	//}
-
 }

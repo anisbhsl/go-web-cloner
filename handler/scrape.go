@@ -15,8 +15,6 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		   Sample POST request body
 		   {
 		       "url":"www.airbnb.com/hosting",
-		       "screen_width":1920,
-		       "screen_height": 1080,
 		       "username": "abc@def.gh",
 		       "password": "L36gh!h'",
 		        "project_id": "abc", //optional
@@ -71,8 +69,8 @@ func Scrape(dispatcher *asyncq.Dispatcher) gin.HandlerFunc{
 		response["scrape_id"] = scrapeID //use unix timestamp
 		response["msg"] = "Scrapping Started"
 		response["url"] = scrapeConfig.URL
-		response["screen_height"] = scrapeConfig.ScreenHeight
-		response["screen_width"] = scrapeConfig.ScreenWidth
+		//response["screen_height"] = scrapeConfig.ScreenHeight
+		//response["screen_width"] = scrapeConfig.ScreenWidth
 		response["project_id"] = scrapeConfig.ProjectID
 		if response["project_id"] == "" {
 			response["project_id"] = "default"

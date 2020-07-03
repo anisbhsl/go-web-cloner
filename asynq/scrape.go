@@ -9,8 +9,8 @@ import (
 
 type ScrapeConfig struct {
 	URL                 string   `json:"url"`
-	ScreenWidth         int      `json:"screen_width"`
-	ScreenHeight        int      `json:"screen_height"`
+	//ScreenWidth         int      `json:"screen_width"`
+	//ScreenHeight        int      `json:"screen_height"`
 	Username            string   `json:"username"`
 	Password            string   `json:"password"`
 	AccessToken         string   `json:"access_token"`
@@ -35,8 +35,8 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		AccessToken:         s.AccessToken,
 		ProjectID:           s.ProjectID,
 		ScrapeID:            scrapeID,
-		ScreenWidth:         s.ScreenWidth,
-		ScreenHeight:        s.ScreenHeight,
+		//ScreenWidth:         s.ScreenWidth,
+		//ScreenHeight:        s.ScreenHeight,
 		FolderThreshold:     s.FolderThreshold,
 		FolderExamplesCount: s.FolderExamplesCount,
 		Patterns:            s.Patterns,
