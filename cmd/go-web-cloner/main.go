@@ -41,7 +41,7 @@ func main(){
 	router.GET("/api/status",handler.Status(dispatcher))
 	router.GET("/api/stop", handler.Stop(dispatcher))
 	router.GET("/api/redirect",handler.Redirect)
-	router.GET("/report",handler.Report)
+	router.GET("/report",handler.Report(dispatcher))
 	//router.Handle("/static",http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 
 	log.Fatal(router.Run("0.0.0.0:"+PORT))

@@ -136,3 +136,100 @@ func (s *Scraper) generateReport() error {
 	s.log.Info("Report Generated...")
 	return nil
 }
+
+
+func (s *Scraper) GenerateDynamicReport() []DetailedReport {
+	/*
+		Update folder counts for each pattern
+	*/
+	exampleCount:=make(map[string]int)  //holds folder count for each path
+
+	tempReport:=make([]DetailedReport, 0)
+	detailedReport:=s.report.DetailedReport
+	for _,val:=range detailedReport{
+		url:=val.OriginURL
+		urlArr:=strings.Split(url,"/")
+		length:=len(urlArr)
+		path:=""
+		if length<=2{  //its host only
+			path=urlArr[0]+"/"
+		}else{
+			if urlArr[length-1]==""{
+				for i:=0;i<length-2;i++{
+					path+=urlArr[i]+"/"
+				}
+			}else{
+				for i:=0;i<length-1;i++{
+					path+=urlArr[i]+"/"
+				}
+			}
+		}
+
+		if v,ok:=s.Config.FolderCount[path];!ok{
+			val.FolderCount="0"
+		}else{
+			count:=len(v)
+			strCount:=strconv.Itoa(count)
+			if count>=s.Config.FolderThreshold{
+				strCount="{"+strCount+"}"
+				val.FolderCount=strCount
+			}else{
+				val.FolderCount=strCount
+			}
+		}
+		tempReport=append(tempReport,val)
+	}
+
+	finalReport:=make([]DetailedReport,0)
+	urlToSort:=[]string{}
+
+	for _,val:=range tempReport{
+		url:=val.OriginURL
+		urlArr:=strings.Split(url,"/")
+		length:=len(urlArr)
+		path:=""
+		if length<=2{  //its host only
+			path=urlArr[0]+"/"
+		}else{
+			if urlArr[length-1]==""{
+				for i:=0;i<length-2;i++{
+					path+=urlArr[i]+"/"
+				}
+			}else{
+				for i:=0;i<length-1;i++{
+					path+=urlArr[i]+"/"
+				}
+			}
+		}
+
+		if _,ok:=s.Config.FolderCount[path];!ok{
+			val.FolderCount="0"
+		}else{
+			if _,okay:=exampleCount[path];!okay{
+				exampleCount[path]=0
+			}else{
+				exampleCount[path]++
+				if exampleCount[path]>=s.Config.FolderExamplesCount{
+					continue
+				}
+			}
+		}
+		urlToSort=append(urlToSort,val.OriginURL)
+		finalReport=append(finalReport,val)
+	}
+
+	//sorts in ascending order
+	sort.Strings(urlToSort)
+	sortedReport:=make([]DetailedReport,0)
+	for _,url:=range urlToSort{
+		for _,val:=range finalReport{
+			if val.OriginURL==url{
+				sortedReport=append(sortedReport,val)
+				break
+			}
+		}
+	}
+
+
+	return sortedReport
+}

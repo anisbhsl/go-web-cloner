@@ -35,8 +35,6 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		AccessToken:         s.AccessToken,
 		ProjectID:           s.ProjectID,
 		ScrapeID:            scrapeID,
-		//ScreenWidth:         s.ScreenWidth,
-		//ScreenHeight:        s.ScreenHeight,
 		FolderThreshold:     s.FolderThreshold,
 		FolderExamplesCount: s.FolderExamplesCount,
 		Patterns:            s.Patterns,
@@ -44,6 +42,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		FolderCount:         make(map[string]map[string]bool),
 		Stop:                false,
 	}
+
 	logger := logger()
 	sc, err := scraper.New(logger, cfg)
 	if err != nil {
