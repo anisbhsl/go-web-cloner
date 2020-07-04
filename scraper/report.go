@@ -138,7 +138,7 @@ func (s *Scraper) generateReport() error {
 }
 
 
-func (s *Scraper) GenerateDynamicReport() []DetailedReport {
+func (s *Scraper) GenerateDynamicReport() *Report{
 	/*
 		Update folder counts for each pattern
 	*/
@@ -230,6 +230,8 @@ func (s *Scraper) GenerateDynamicReport() []DetailedReport {
 		}
 	}
 
+	tmpReport:=s.report
+	tmpReport.DetailedReport=sortedReport
 
-	return sortedReport
+	return tmpReport
 }
