@@ -78,6 +78,7 @@ func generateHTMLReport(c *gin.Context,scrapeID string){
 				"err": "no report found!",
 			},
 		)
+		return
 	}
 
 	defer jsonFile.Close()
@@ -90,6 +91,7 @@ func generateHTMLReport(c *gin.Context,scrapeID string){
 				"err": "Error while reading report",
 			},
 		)
+		return
 	}
 
 	var finalReport scraper.Report
@@ -107,5 +109,6 @@ func generateHTMLReport(c *gin.Context,scrapeID string){
 			"details": finalReport.DetailedReport,
 		},
 	)
+	return
 
 }
