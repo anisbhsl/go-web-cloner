@@ -9,6 +9,7 @@ import (
 	"go-web-cloner/surf/agent"
 	"go-web-cloner/surf/browser"
 	"go.uber.org/zap"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -40,6 +41,7 @@ type Config struct {
 	Patterns            []string `json:"patterns"`
 	PatternCount map[*regexp.Regexp]int //folder count patterns
 	FolderCount  map[string]map[string]bool //Folder Threshold Count Global
+	MandatoryDownload map[string]bool //download links which have been resolved due to folder count limit
 	Stop bool
 }
 
@@ -186,17 +188,28 @@ func (s *Scraper) downloadPage(u *url.URL, currentDepth uint, startTime time.Tim
 		else
 		  map["a/b/c"]=1
 	*/
-	//if folder count threshold has exceeded
-	//do not visit any links just return
-	if s.hasFolderCountExceeded(u){
-		return
+	log.Println("Downloading URL path: ",u.Scheme+"://"+u.Host+u.Path)
+	println("contents in mandatory download")
+	for k,_:=range s.Config.MandatoryDownload{
+		println(k)
+	}
+	if _,ok:=s.Config.MandatoryDownload[u.Scheme+"://"+u.Host+u.Path];!ok{
+		println("doesn't exist in mandatory download so check for folder count")
+		//if folder count threshold has exceeded
+		//do not visit any links just return
+		if s.hasFolderCountExceeded(u){
+			return
+		}
+
+		//if folder threshold count has been exceeded return
+		//do not visit any links inside
+		if s.hasFolderThresholdExceededForPattern(u){
+			return
+		}
+	}else{
+		delete(s.Config.MandatoryDownload,u.Scheme+"://"+u.Host+u.Path) //delete matched urls
 	}
 
-	//if folder threshold count has been exceeded return
-	//do not visit any links inside
-	if s.hasFolderThresholdExceededForPattern(u){
-		return
-	}
 
 	s.log.Info("Downloading", zap.Stringer("URL", u))
 	if err := s.browser.Open(u.String()); err != nil {
@@ -424,10 +437,21 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 				s.log.Info("folder threshold reached")
 				return true
 			}
-		}else{
+		}else{ //todo: yo else chainna hola yar
 			//if not add folder
-			val[newPathArr[0]]=true
-			s.Config.FolderCount[finalPath]=val //update folders
+			//check for / at the end of path
+			if len(newPathArr)==1{
+				if pathArr[len(pathArr)-1]==""{
+					val[newPathArr[0]+"/"]=true
+					s.Config.FolderCount[finalPath]=val//update folders
+				}else{
+					val[newPathArr[0]]=true
+					s.Config.FolderCount[finalPath]=val //update folders
+				}
+			}else{
+				val[newPathArr[0]]=true
+				s.Config.FolderCount[finalPath]=val //update folders
+			}
 		}
 	}
 
@@ -446,6 +470,7 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 
 		}else{
 			l:=len(val)
+
 			if l>=s.Config.FolderThreshold{
 				if _,o:=val[newPathArr[i+1]];o{
 					continue
@@ -453,9 +478,21 @@ func (s *Scraper) hasFolderCountExceeded(u *url.URL) bool{   //checks folder cou
 				s.log.Info("folder threshold reached")
 				return true
 			}
+
 			//if not add folder
-			val[newPathArr[i+1]]=true
-			s.Config.FolderCount[finalPath]=val //update folders
+			if i==length-2{
+				if pathArr[len(pathArr)-1]==""{
+					val[newPathArr[i+1]+"/"]=true
+					s.Config.FolderCount[finalPath]=val//update folders
+				}else{
+					val[newPathArr[i+1]]=true
+					s.Config.FolderCount[finalPath]=val //update folders
+				}
+
+			}else{
+				val[newPathArr[i+1]]=true
+				s.Config.FolderCount[finalPath]=val //update folders
+			}
 		}
 	}
 	return false

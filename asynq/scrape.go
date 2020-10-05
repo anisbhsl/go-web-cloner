@@ -40,6 +40,7 @@ func (d *Dispatcher) StartScrapper(s ScrapeConfig, scrapeID string) {
 		Patterns:            s.Patterns,
 		PatternCount:        initPatternCount(s.Patterns),
 		FolderCount:         make(map[string]map[string]bool),
+		MandatoryDownload: make(map[string]bool),
 		Stop:                false,
 	}
 

@@ -13,8 +13,6 @@ type Report struct {
 	ProjectID           string           `json:"project_id"`
 	ScrapeID            string           `json:"scrape_id"`
 	URL                 string           `json:"url"`
-	//ScreenWidth         int              `json:"screen_width"`
-	//ScreenHeight        int              `json:"screen_height"`
 	FolderThreshold     int              `json:"folder_threshold"`
 	DetailedReport      []DetailedReport `json:"detailed_report"`
 	FolderExamplesCount int              `json:"folder_examples_count"`
@@ -232,6 +230,5 @@ func (s *Scraper) GenerateDynamicReport() *Report{
 
 	tmpReport:=s.report
 	tmpReport.DetailedReport=sortedReport
-
 	return tmpReport
 }

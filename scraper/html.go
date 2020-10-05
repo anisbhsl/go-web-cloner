@@ -5,6 +5,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 	"io"
+	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -50,6 +51,12 @@ func (s *Scraper) fixQuerySelection(url *url.URL, attribute string, selection *g
 	if strings.HasPrefix(src, "mailto:") {
 		return
 	}
+
+	//should fix issue for playheartstone
+	//if strings.HasPrefix(src,"//"){
+	//	src=s.URL.Scheme+src
+	//}
+
 	resolved := s.resolveURL(url, src, linkIsAPage, relativeToRoot)
 	if src == resolved { // nothing changed
 		return
@@ -62,12 +69,10 @@ func (s *Scraper) fixQuerySelection(url *url.URL, attribute string, selection *g
 func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, selection *goquery.Selection,
 	linkIsAPage bool,relativeToRoot string){
 
-
 	src, ok := selection.Attr(attribute)
 	if !ok {
 		return
 	}
-
 
 	tmpSrc:=src
 	finalPath:=""
@@ -75,6 +80,8 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 	println("src is: ",src)
 	var hostPresent bool
 	hostPresent=true
+
+	doesNotExist:=false
 
 	//if strings.Contains(tmpSrc,"http://") || strings.Contains(tmpSrc,"https://") {
 	if tmpSrc!="#" && tmpSrc!="/"{
@@ -92,10 +99,6 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 			protocol="http://"
 		}
 
-		//if strings.Contains(tmpSrc,"pricing-options"){
-		//	println("pricing option lai milaudai chu hai guys")
-		//	time.Sleep(5*time.Second)
-		//}
 
 		if strings.Contains(tmpSrc,".html"){
 			if !strings.Contains(tmpSrc,"index.html"){
@@ -117,39 +120,117 @@ func (s *Scraper) fixQuerySelectionForPattern(url *url.URL, attribute string, se
 				finalPath+= newPathArr[i] + "/"
 		}
 		println("new path arr is : ",newPathArr)
+		println("finalpath is: ",finalPath)
+		time.Sleep(2*time.Second)
 
 		if val,ok:=s.Config.FolderCount[finalPath];ok && length!=0{
 			println("match coming inside for: ",finalPath)
 			println("newpath len-1 is: ",newPathArr[length-1])
 			if _,exists:=val[newPathArr[length-1]];!exists{
 				println("doesn't exist and needs to resolve: ",newPathArr[length-1])
+				println("val is : %v",val)
 
 				//provide an already existing one as url
-				path:=strings.TrimPrefix(finalPath,url.Host)
+				//path:=strings.TrimPrefix(finalPath,url.Host)
+				//
+				//for k,_:=range val{
+				//	if pathArr[len(pathArr)-1]==""{
+				//		path+=k +"/"
+				//	}else{
+				//		path+=k
+				//	}
+				//	break
+				//}
+				//if hostPresent{
+				//	tmpSrc=protocol+url.Host+path
+				//}else{
+				//	tmpSrc=path
+				//}
+				//src=tmpSrc
+				//
+				//var srcExists bool
+				//for _,val:=range s.report.DetailedReport{
+				//	if src==val.OriginURL==src{
+				//		srcExists=true
+				//	}
+				//}
 
+				loopCount:=0
+				srcExists:=false
+
+				path:=strings.TrimPrefix(finalPath,url.Host)
 				for k,_:=range val{
-					if pathArr[len(pathArr)-1]==""{
-						path+=k +"/"
+					tmpPath:=path
+					//if pathArr[len(pathArr)-1]==""{  //todo: needs a good workaround here hai
+					//	path+=k +"/"
+					//}else{
+					//	path+=k
+					//}
+					path+=k
+
+					if hostPresent{
+						tmpSrc=protocol+url.Host+path
 					}else{
-						path+=k
+						tmpSrc=path
 					}
-					break
+					src=tmpSrc
+
+					for _,v:=range s.report.DetailedReport{
+						if src==v.OriginURL && v.StatusCode<400{
+							srcExists=true
+							break
+						}
+					}
+
+					if srcExists==true || loopCount>=5{
+						break
+					}
+					path=tmpPath
+					loopCount++
+					println("updated path: ",path)
 				}
-				if hostPresent{
-					tmpSrc=protocol+url.Host+path
-				}else{
-					tmpSrc=path
-				}
-				src=tmpSrc
+				doesNotExist=true
 			}
+		}else{
+			finalPath:=url.Host+"/"
+			//for host part
+			if _,ok:=s.Config.FolderCount[finalPath];!ok{
+				folder:=make(map[string]bool)
+				folder[newPathArr[0]]=true
+
+				s.Config.FolderCount[finalPath]=folder
+			}
+
+			length:=len(newPathArr)
+			for i:=0;i<length-1;i++ {
+
+				finalPath += newPathArr[i]
+				finalPath += "/"
+
+				if _, ok := s.Config.FolderCount[finalPath]; !ok {
+					folder := make(map[string]bool)
+
+					folder[newPathArr[i+1]] = true
+					s.Config.FolderCount[finalPath] = folder
+
+				}
+			}
+
+
 		}
 	}
+
 
 	fmt.Println("src changed into : ",src)
 
 	resolved := s.resolveURL(url, src, linkIsAPage, relativeToRoot)
 	if src == resolved { // nothing changed
 		return
+	}
+
+	if doesNotExist{
+		log.Println("doesn't exist and added to mandatory download")
+		s.Config.MandatoryDownload[src]=true
 	}
 
 	fmt.Println("resolved into: ",resolved)

@@ -32,7 +32,12 @@ func main(){
 	router.LoadHTMLGlob("templates/*")
 	//router.Static("/data","./data")
 
+	//config:=cors.DefaultConfig()
+	//config.AllowedOrigins=[]string{"http://estimate.appgreenhouse.io"}
+	//router.Use(cors.New(config))
+
 	router.Use(CORSMiddleware(),static.Serve("/data",static.LocalFile("./data",true)))
+	//router.Use(cors.New(config),static.Serve("/data",static.LocalFile("./data",true)))
 
 
 	router.GET("/",handler.Index(dispatcher))
@@ -49,7 +54,7 @@ func main(){
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://estimate.appgreenhouse.io/")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
