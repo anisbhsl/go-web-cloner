@@ -6,5 +6,7 @@ WORKDIR ${APP_HOME}
 
 COPY . .
 
-CMD ["./go-web-cloner"]
+RUN go build -o go-web-cloner cmd/go-web-cloner/main.go
+
+ENTRYPOINT ["./go-web-cloner"]
 
